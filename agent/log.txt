@@ -1,0 +1,20 @@
+[2025-03-12T08:03:43.097Z] Starting DATA_INSIGHT analysis...
+[2025-03-12T08:03:52.919Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-12T08:03:52.921Z] Processing all posts request...
+[2025-03-12T08:04:05.228Z] All posts table generated successfully
+[2025-03-12T08:04:35.492Z] Starting action with message: help me create bounty for AI hackathon
+[2025-03-12T08:04:35.493Z] Processing bounty creation request
+[2025-03-12T08:04:35.493Z] Extracted 0 criteria from user input
+[2025-03-12T08:04:38.084Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-12T08:04:38.086Z] Processed 14 posts
+[2025-03-12T08:04:38.088Z] Filtered to 14 posts
+[2025-03-12T08:04:38.089Z] Grouped into 9 author groups
+[2025-03-12T08:04:38.090Z] Starting embeddings generation...
+[2025-03-12T08:04:39.903Z] Completed post embeddings generation
+[2025-03-12T08:04:39.905Z] Starting query embedding generation...
+[2025-03-12T08:04:40.854Z] Completed query embedding generation
+[2025-03-12T08:04:40.856Z] Starting post ranking...
+[2025-03-12T08:04:40.861Z] Starting bounty creation with 9 posts
+[2025-03-12T08:04:52.901Z] Creating new bounty_id.txt file
+[2025-03-12T08:04:52.904Z] Bounty ID "QmXhaRnLBKpARita2h1TaGeih5G9YyFpheEcSg4Txih3ed" saved to bounty_id.txt
+[2025-03-12T08:04:52.905Z] CREATE_BOUNTY analysis completed successfully with bounty

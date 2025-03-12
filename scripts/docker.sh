@@ -42,6 +42,7 @@ case "$1" in
             "client-twitter"
             "core"
             "plugin-bootstrap"
+            "plugin-aptos"
             "plugin-image-generation"
             "plugin-node"
             "plugin-solana"

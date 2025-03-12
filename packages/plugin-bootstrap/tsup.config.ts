@@ -15,6 +15,22 @@ export default defineConfig({
         "https",
         "http",
         "agentkeepalive",
+        "@reflink/reflink",
+        "@node-llama-cpp",
+        "https",
+        "http",
+        "agentkeepalive",
+        "safe-buffer",
+        "base-x",
+        "bs58",
+        "borsh",
+        "@solana/buffer-layout",
+        "stream",
+        "buffer",
+        "querystring",
+        "amqplib",
+        "@langchain/openai",
+        // Add other modules you
         // Add other modules you want to externalize
     ],
 });

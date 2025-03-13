@@ -111,3 +111,72 @@ TypeError: Cannot read properties of null (reading 'title')
 [2025-03-13T08:03:37.137Z] Starting bounty creation with 40 posts
 [2025-03-13T08:03:44.028Z] Bounty ID "QmT5qem2uVvdbSYwTBgTLSS6E7f4V7qZTCic1mhawUV61j" saved to bounty_id.txt
 [2025-03-13T08:03:44.029Z] CREATE_BOUNTY analysis completed successfully with bounty
+[2025-03-13T08:24:48.911Z] Starting DATA_INSIGHT analysis...
+[2025-03-13T08:24:54.043Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T08:24:54.062Z] Error in data analysis: Cannot read properties of undefined (reading 'authorFullname')
+TypeError: Cannot read properties of undefined (reading 'authorFullname')
+    at file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:28017:38
+    at Array.map (<anonymous>)
+    at Object.handler (file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:28016:44)
+    at async AgentRuntime.processActions (file:///home/quanna/new_eliza/eliza/packages/core/dist/index.js:5271:17)
+    at async file:///home/quanna/new_eliza/eliza/packages/client-direct/dist/index.js:793:13
+[2025-03-13T08:26:57.793Z] Starting DATA_INSIGHT analysis...
+[2025-03-13T08:27:02.687Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T08:27:02.693Z] Error in data analysis: Cannot read properties of undefined (reading 'authorFullname')
+TypeError: Cannot read properties of undefined (reading 'authorFullname')
+    at file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:28018:38
+    at Array.map (<anonymous>)
+    at Object.handler (file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:28017:44)
+    at async AgentRuntime.processActions (file:///home/quanna/new_eliza/eliza/packages/core/dist/index.js:5271:17)
+    at async file:///home/quanna/new_eliza/eliza/packages/client-direct/dist/index.js:793:13
+[2025-03-13T08:30:11.928Z] Starting DATA_INSIGHT analysis...
+[2025-03-13T08:30:19.598Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T08:30:19.610Z] Error in data analysis: Cannot read properties of undefined (reading 'authorFullname')
+TypeError: Cannot read properties of undefined (reading 'authorFullname')
+    at file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:28018:38
+    at Array.map (<anonymous>)
+    at Object.handler (file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:28017:44)
+    at async AgentRuntime.processActions (file:///home/quanna/new_eliza/eliza/packages/core/dist/index.js:5271:17)
+    at async file:///home/quanna/new_eliza/eliza/packages/client-direct/dist/index.js:793:13
+[2025-03-13T08:32:34.489Z] Starting DATA_INSIGHT analysis...
+[2025-03-13T08:32:40.018Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T08:32:40.030Z] Error in data analysis: Cannot read properties of undefined (reading 'authorFullname')
+TypeError: Cannot read properties of undefined (reading 'authorFullname')
+    at file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:28021:45
+    at Array.map (<anonymous>)
+    at Object.handler (file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:28020:44)
+    at async AgentRuntime.processActions (file:///home/quanna/new_eliza/eliza/packages/core/dist/index.js:5271:17)
+    at async file:///home/quanna/new_eliza/eliza/packages/client-direct/dist/index.js:793:13
+[2025-03-13T08:33:25.869Z] Starting DATA_INSIGHT analysis...
+[2025-03-13T08:33:29.050Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T08:33:29.051Z] Error in data analysis: Cannot read properties of undefined (reading 'authorFullname')
+TypeError: Cannot read properties of undefined (reading 'authorFullname')
+    at file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:28021:45
+    at Array.map (<anonymous>)
+    at Object.handler (file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:28020:44)
+    at async AgentRuntime.processActions (file:///home/quanna/new_eliza/eliza/packages/core/dist/index.js:5271:17)
+    at async file:///home/quanna/new_eliza/eliza/packages/client-direct/dist/index.js:793:13
+[2025-03-13T08:34:23.224Z] Starting DATA_INSIGHT analysis...
+[2025-03-13T08:34:25.104Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T08:34:25.113Z] Error in data analysis: Cannot read properties of undefined (reading 'authorFullname')
+TypeError: Cannot read properties of undefined (reading 'authorFullname')
+    at file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:28022:45
+    at Array.map (<anonymous>)
+    at Object.handler (file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:28021:44)
+    at async AgentRuntime.processActions (file:///home/quanna/new_eliza/eliza/packages/core/dist/index.js:5271:17)
+    at async file:///home/quanna/new_eliza/eliza/packages/client-direct/dist/index.js:793:13
+[2025-03-13T08:37:42.090Z] Starting DATA_INSIGHT analysis...
+[2025-03-13T08:37:48.511Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T08:37:48.513Z] Processed 62 posts
+[2025-03-13T08:37:48.514Z] Filtered to 56 posts
+[2025-03-13T08:37:48.515Z] Grouped into 40 author groups
+[2025-03-13T08:37:48.516Z] Starting embeddings generation...
+[2025-03-13T08:37:50.567Z] Completed post embeddings generation
+[2025-03-13T08:37:50.573Z] Starting query embedding generation...
+[2025-03-13T08:37:51.559Z] Completed query embedding generation
+[2025-03-13T08:37:51.560Z] Starting post ranking...
+[2025-03-13T08:37:51.569Z] Ranked posts and selected top 3
+[2025-03-13T08:37:51.570Z] Generating text response...
+[2025-03-13T08:37:56.706Z] Completed text response generation
+[2025-03-13T08:37:56.706Z] Sending response to callback...
+[2025-03-13T08:37:56.707Z] DATA_INSIGHT analysis completed successfully

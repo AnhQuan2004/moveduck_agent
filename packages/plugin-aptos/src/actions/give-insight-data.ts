@@ -40,13 +40,20 @@ const cosineSimilarity = (vecA: number[], vecB: number[]): number => {
 
 const groupPostsById = (posts: DataItem[]): ProcessedPost[] => {
     const groupedPosts = new Map<string, { texts: string[], timestamps: string[] }>();
-    
+
     // Group all texts and timestamps by authorFullname
     posts.forEach(post => {
-        if (!groupedPosts.has(post.authorFullname)) {
-            groupedPosts.set(post.authorFullname, { texts: [], timestamps: [] });
+        const authorFullname = post.authorFullname || 'Unknown'; // Default to 'Unknown' if authorFullname is missing
+        
+        // Log if authorFullname is missing
+        if (!post.authorFullname) {
+            writeToLog(`Warning: Missing authorFullname in post: ${JSON.stringify(post)}`);
         }
-        const group = groupedPosts.get(post.authorFullname)!;
+
+        if (!groupedPosts.has(authorFullname)) {
+            groupedPosts.set(authorFullname, { texts: [], timestamps: [] });
+        }
+        const group = groupedPosts.get(authorFullname)!;
         if (post.text && post.text.length > 0) {
             group.texts.push(post.text);
             group.timestamps.push(post.timestamp || '');
@@ -146,6 +153,7 @@ export default {
             for (let i = 0; i < maxRetries; i++) {
                 try {
                     rawData = await getAllData();
+                    await fs.appendFile('pinata_log.txt', JSON.stringify(rawData));
                     await writeToLog(`Successfully retrieved data from Pinata on attempt ${i + 1}`);
                     break;
                 } catch (error) {
@@ -161,11 +169,23 @@ export default {
             }
 
             // Process raw data into structured format
-            const processedPosts = rawData.map((item: any) => ({
-                authorFullname: item.authorFullname || 'Unknown',
-                text: item.text || '',
-                timestamp: item.createdAt || new Date().toISOString()
-            })).filter(post => post.text && post.text.length > 0);
+            // Process raw data into structured format with default values
+            // Process raw data with additional filtering
+            const processedPosts = rawData
+            .filter(item => item != null && item.authorFullname && item.text) // Filter out null, undefined, or incomplete items
+            .map((item: any) => {
+                const authorFullname = item.authorFullname || 'Unknown';  // Default to 'Unknown' if authorFullname is missing
+                const text = item.text || ''; // Default to empty string if text is missing
+                const timestamp = item.createdAt || new Date().toISOString();  // Default to current timestamp if missing
+
+                // Log missing required fields
+                if (!authorFullname || !text) {
+                    writeToLog(`Warning: Missing required fields (authorFullname or text) in item: ${JSON.stringify(item)}`);
+                }
+
+                return { authorFullname, text, timestamp };
+            });  // Filter out posts without text or authorFullname
+
 
             // Check if this is a request for all posts
             const isAllPostsRequest = message.content.text.toLowerCase().includes('all') && 

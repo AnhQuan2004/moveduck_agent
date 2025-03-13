@@ -634,6 +634,9 @@ export type Client = {
 
     /** Start client connection */
     start: (runtime: IAgentRuntime) => Promise<ClientInstance>;
+
+    /** Stop client connection */
+    stop: (runtime: IAgentRuntime) => Promise<unknown>;
 };
 
 /**

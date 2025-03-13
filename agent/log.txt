@@ -18,3 +18,96 @@
 [2025-03-12T08:04:52.901Z] Creating new bounty_id.txt file
 [2025-03-12T08:04:52.904Z] Bounty ID "QmXhaRnLBKpARita2h1TaGeih5G9YyFpheEcSg4Txih3ed" saved to bounty_id.txt
 [2025-03-12T08:04:52.905Z] CREATE_BOUNTY analysis completed successfully with bounty
+[2025-03-13T07:39:17.899Z] Starting action with message: create bounty for AI hackathon in aptos
+[2025-03-13T07:39:17.901Z] Processing bounty creation request
+[2025-03-13T07:39:17.902Z] Extracted 0 criteria from user input
+[2025-03-13T07:39:24.449Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T07:39:24.455Z] Error in action handler: Cannot read properties of undefined (reading 'authorFullname')
+TypeError: Cannot read properties of undefined (reading 'authorFullname')
+    at file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:27806:42
+    at Array.map (<anonymous>)
+    at Object.handler (file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:27805:48)
+    at async AgentRuntime.processActions (file:///home/quanna/new_eliza/eliza/packages/core/dist/index.js:5271:17)
+    at async file:///home/quanna/new_eliza/eliza/packages/client-direct/dist/index.js:793:13
+[2025-03-13T07:40:08.638Z] Starting action with message: create bounty for AI hackathon in aptos
+[2025-03-13T07:40:08.639Z] Processing bounty creation request
+[2025-03-13T07:40:08.640Z] Extracted 0 criteria from user input
+[2025-03-13T07:40:12.160Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T07:40:12.161Z] Error in action handler: Cannot read properties of undefined (reading 'authorFullname')
+TypeError: Cannot read properties of undefined (reading 'authorFullname')
+    at file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:27806:42
+    at Array.map (<anonymous>)
+    at Object.handler (file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:27805:48)
+    at async AgentRuntime.processActions (file:///home/quanna/new_eliza/eliza/packages/core/dist/index.js:5271:17)
+    at async file:///home/quanna/new_eliza/eliza/packages/client-direct/dist/index.js:793:13
+[2025-03-13T07:44:18.965Z] Starting action with message: create bounty for AI hackathon
+[2025-03-13T07:44:18.966Z] Processing bounty creation request
+[2025-03-13T07:44:18.967Z] Extracted 0 criteria from user input
+[2025-03-13T07:44:24.635Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T07:44:24.645Z] Error in action handler: Cannot read properties of undefined (reading 'authorFullname')
+TypeError: Cannot read properties of undefined (reading 'authorFullname')
+    at file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:27806:42
+    at Array.map (<anonymous>)
+    at Object.handler (file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:27805:48)
+    at async AgentRuntime.processActions (file:///home/quanna/new_eliza/eliza/packages/core/dist/index.js:5271:17)
+    at async file:///home/quanna/new_eliza/eliza/packages/client-direct/dist/index.js:793:13
+[2025-03-13T07:51:41.699Z] Starting action with message: create bounty for AI hackathon
+[2025-03-13T07:51:41.700Z] Processing bounty creation request
+[2025-03-13T07:51:41.701Z] Extracted 0 criteria from user input
+[2025-03-13T07:51:47.040Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T07:51:47.046Z] Error in action handler: Cannot read properties of undefined (reading 'authorFullname')
+TypeError: Cannot read properties of undefined (reading 'authorFullname')
+    at file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:27807:42
+    at Array.map (<anonymous>)
+    at Object.handler (file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:27806:48)
+    at async AgentRuntime.processActions (file:///home/quanna/new_eliza/eliza/packages/core/dist/index.js:5271:17)
+    at async file:///home/quanna/new_eliza/eliza/packages/client-direct/dist/index.js:793:13
+[2025-03-13T07:59:23.970Z] Starting action with message: create bounty for AI hackathon
+[2025-03-13T07:59:23.972Z] Processing bounty creation request
+[2025-03-13T07:59:23.973Z] Extracted 0 criteria from user input
+[2025-03-13T07:59:29.172Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T07:59:29.173Z] Processed 62 posts
+[2025-03-13T07:59:29.174Z] Filtered to 56 posts
+[2025-03-13T07:59:29.175Z] Grouped into 40 author groups
+[2025-03-13T07:59:29.176Z] Starting embeddings generation...
+[2025-03-13T07:59:31.894Z] Completed post embeddings generation
+[2025-03-13T07:59:31.903Z] Starting query embedding generation...
+[2025-03-13T07:59:32.957Z] Completed query embedding generation
+[2025-03-13T07:59:32.957Z] Starting post ranking...
+[2025-03-13T07:59:32.962Z] Starting bounty creation with 40 posts
+[2025-03-13T07:59:36.929Z] Error creating bounty: The number 0.5 cannot be converted to a BigInt because it is not an integer
+[2025-03-13T07:59:36.936Z] Error in action handler: Cannot read properties of null (reading 'title')
+TypeError: Cannot read properties of null (reading 'title')
+    at Object.handler (file:///home/quanna/new_eliza/eliza/packages/plugin-aptos/dist/index.js:27834:28)
+    at async AgentRuntime.processActions (file:///home/quanna/new_eliza/eliza/packages/core/dist/index.js:5271:17)
+    at async file:///home/quanna/new_eliza/eliza/packages/client-direct/dist/index.js:793:13
+[2025-03-13T08:00:58.897Z] Starting action with message: create bounty for AI hackathon
+[2025-03-13T08:00:58.900Z] Processing bounty creation request
+[2025-03-13T08:00:58.900Z] Extracted 0 criteria from user input
+[2025-03-13T08:01:04.378Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T08:01:04.380Z] Processed 62 posts
+[2025-03-13T08:01:04.382Z] Filtered to 56 posts
+[2025-03-13T08:01:04.382Z] Grouped into 40 author groups
+[2025-03-13T08:01:04.383Z] Starting embeddings generation...
+[2025-03-13T08:01:07.360Z] Completed post embeddings generation
+[2025-03-13T08:01:07.372Z] Starting query embedding generation...
+[2025-03-13T08:01:08.218Z] Completed query embedding generation
+[2025-03-13T08:01:08.219Z] Starting post ranking...
+[2025-03-13T08:01:08.229Z] Starting bounty creation with 40 posts
+[2025-03-13T08:01:15.269Z] Bounty ID "Qmd5KKJEdbyPKDVUBfsU5dY9APzuUdzGZWWmHA5kN81w3q" saved to bounty_id.txt
+[2025-03-13T08:01:15.270Z] CREATE_BOUNTY analysis completed successfully with bounty
+[2025-03-13T08:03:29.089Z] Starting action with message: create bounty for AI hackathon
+[2025-03-13T08:03:29.090Z] Processing bounty creation request
+[2025-03-13T08:03:29.091Z] Extracted 0 criteria from user input
+[2025-03-13T08:03:34.148Z] Successfully retrieved data from Pinata on attempt 1
+[2025-03-13T08:03:34.151Z] Processed 62 posts
+[2025-03-13T08:03:34.153Z] Filtered to 56 posts
+[2025-03-13T08:03:34.154Z] Grouped into 40 author groups
+[2025-03-13T08:03:34.155Z] Starting embeddings generation...
+[2025-03-13T08:03:35.941Z] Completed post embeddings generation
+[2025-03-13T08:03:35.947Z] Starting query embedding generation...
+[2025-03-13T08:03:37.129Z] Completed query embedding generation
+[2025-03-13T08:03:37.130Z] Starting post ranking...
+[2025-03-13T08:03:37.137Z] Starting bounty creation with 40 posts
+[2025-03-13T08:03:44.028Z] Bounty ID "QmT5qem2uVvdbSYwTBgTLSS6E7f4V7qZTCic1mhawUV61j" saved to bounty_id.txt
+[2025-03-13T08:03:44.029Z] CREATE_BOUNTY analysis completed successfully with bounty

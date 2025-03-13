@@ -1,9 +1,9 @@
 import express from "express";
-import type { Router } from 'express';
 import bodyParser from "body-parser";
 import cors from "cors";
 import path from "path";
 import fs from "fs";
+import { getAllData } from './pinata';
 
 import {
     type AgentRuntime,
@@ -15,10 +15,11 @@ import {
     type Character,
 } from "@elizaos/core";
 
-// import type { TeeLogQuery, TeeLogService } from "@elizaos/plugin-tee-log";
-// import { REST, Routes } from "discord.js";
+import { REST, Routes } from "discord.js";
 import type { DirectClient } from ".";
 import { validateUuid } from "@elizaos/core";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import type { Router } from 'express';
 
 interface UUIDParams {
     agentId: UUID;
@@ -51,13 +52,39 @@ function validateUUIDParams(
     return { agentId };
 }
 
+async function callGemini(prompt: string) {
+    try {
+        const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY || '');
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        
+        // Strip markdown and return raw text
+        return text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    } catch (error) {
+        console.error('Gemini API error:', error);
+        return { 
+            error: "Failed to get Gemini response",
+            details: error.message
+        };
+    }
+}
+
 export function createApiRouter(
-    agents: Map<string, IAgentRuntime>,
+    agents: Map<string, AgentRuntime>,
     directClient: DirectClient
-):Router {
+): Router {
     const router = express.Router();
 
-    router.use(cors());
+    router.use((req, res, next) => {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        res.header("Access-Control-Allow-Headers", "Content-Type");
+        next();
+    });
+
     router.use(bodyParser.json());
     router.use(bodyParser.urlencoded({ extended: true }));
     router.use(
@@ -74,14 +101,258 @@ export function createApiRouter(
         res.json({ message: "Hello World!" });
     });
 
-    router.get("/agents", (req, res) => {
-        const agentsList = Array.from(agents.values()).map((agent) => ({
-            id: agent.agentId,
-            name: agent.character.name,
-            clients: Object.keys(agent.clients),
-        }));
-        res.json({ agents: agentsList });
-    });
+//     router.get("/data", async (req, res) => {
+//         res.header("Access-Control-Allow-Origin", "*");
+//         res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+//         res.header("Access-Control-Allow-Headers", "Content-Type");
+    
+//         try {
+//             let rawData = await getAllData();
+    
+//             if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+//                 throw new Error('No valid data found from Pinata');
+//             }
+    
+//             const authorCounts = {};
+//             const formattedData = rawData.map(tweet => {
+//                 const author = tweet.authorFullname || "anonymous";
+//                 authorCounts[author] = (authorCounts[author] || 0) + 1;
+    
+//                 return {
+//                     id: `${author}_${authorCounts[author]}`,
+//                     authorFullname: author,
+//                     text: tweet.text,
+//                     url: tweet.url
+//                 };
+//             });
+    
+//             const aiPrompt = `
+// 🔹 🔹 **Objective**
+// - Convert the list of posts into a network consisting of **nodes** (posts, important keywords) and **edges** (relationships between them).
+// - **Hashtags (#)** and **mentions (@)** should only be added to the keywords list **if there are multiple related posts**.
+
+// 🔹 **Step 1: Process post text**
+// - Remove **URLs** (e.g., "https://example.com").
+// - Extract **hashtags (#hashtag)** and **mentions (@username)**.
+// - Remove special characters **(except for @ and #)**.
+// - Convert all text to **lowercase**.
+// - **Skip posts** if they have fewer than 5 words.
+
+// 🔹 **Step 2: Extract keywords & hashtags**
+// - **Only keep hashtags & mentions if they appear in 2 or more posts**.
+// - Discard hashtags & mentions if they appear only once.
+// - Retain **important keywords** such as **"blockchain", "zk-proof", "KYC", "DeFi", "wallet"**.
+
+// 🔹 **Step 3: Build the graph**
+// - **Nodes:**
+//   - Each post is a node:
+//     \`{ "id": "Movement_1", "type": "post" }\`
+//   - Each important keyword **(including popular hashtags/mentions)** is a node:
+//     \`{ "id": "#defi", "type": "keyword" }\`
+//     \`{ "id": "@elonmusk", "type": "keyword" }\`
+
+// - **Edges:**
+//   - Connect posts to keywords.
+//   - Connect posts if they share a hashtag or mention that appears **in at least 2 posts**.
+//   - Example:
+//     \`{ "source": "Movement_1", "target": "#defi" }\`
+//     \`{ "source": "Movement_1", "target": "rushi_2" }\` (if both share the same hashtag)
+
+// 🔹 **Input data (JSON)**
+// Here is the list of posts:
+// ${JSON.stringify(formattedData, null, 2)}
+
+// 🔹 **Desired output data**
+// - Return JSON with **nodes** and **edges** in the following format:
+// \`\`\`json
+// {
+//    "nodes": [
+//         { "id": "Movement_1", "type": "post" },
+//         { "id": "#defi", "type": "keyword" },
+//         { "id": "@elonmusk", "type": "keyword" }
+//    ],
+//    "edges": [
+//         { "source": "Movement_1", "target": "#defi" },
+//         { "source": "Movement_1", "target": "@elonmusk" },
+//         { "source": "rushi_2", "target": "#defi" }
+//    ]
+// }
+// \`\`\`
+// - **Only return JSON**, no extra text.
+// - Maintain standard JSON format for saving to a file and direct usage.
+// `;
+    
+//             const aiResponse = await callGemini(aiPrompt);
+    
+//             if (typeof aiResponse === 'string') {
+//                 const graphData = JSON.parse(aiResponse);
+                
+//                 const contentMap = formattedData.reduce((map, item) => {
+//                     map[item.id] = {
+//                         text: item.text || "",
+//                         url: item.url || ""
+//                     };
+//                     return map;
+//                 }, {});
+
+//                 graphData.nodes = graphData.nodes.map(node => ({
+//                     ...node,
+//                     content: node.type === "post" ? contentMap[node.id]?.text : undefined,
+//                     url: node.type === "post" ? contentMap[node.id]?.url : undefined
+//                 }));
+
+//                 res.json(graphData);
+//             } else {
+//                 throw new Error(aiResponse.error);
+//             }
+    
+//         } catch (error) {
+//             res.status(500).json({
+//                 error: error.message,
+//                 timestamp: new Date().toISOString()
+//             });
+//         }
+//     });
+router.get("/data", async (req, res) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+
+    try {
+        let rawData = await getAllData();
+
+        if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+            throw new Error('No valid data found from Pinata');
+        }
+
+        const authorCounts = {};
+        const formattedData = rawData.map(tweet => {
+            // Add checks to ensure tweet and its properties are defined
+            if (!tweet || !tweet.text) {
+                console.log("Skipping invalid tweet:", tweet);
+                return null; // Skip invalid or incomplete tweets
+            }
+
+            const author = tweet.authorFullname || "anonymous"; // fallback to 'anonymous'
+            const text = tweet.text || ""; // empty string if missing
+            const url = tweet.url || ""; // empty string if missing
+
+            authorCounts[author] = (authorCounts[author] || 0) + 1;
+
+            return {
+                id: `${author}_${authorCounts[author]}`,
+                authorFullname: author,
+                text: text,
+                url: url
+            };
+        }).filter(tweet => tweet !== null); // Remove any invalid tweets from the list
+
+        if (formattedData.length === 0) {
+            throw new Error("No valid tweets to process.");
+        }
+
+        const aiPrompt = `
+🔹 🔹 **Objective**
+- Convert the list of posts into a network consisting of **nodes** (posts, important keywords) and **edges** (relationships between them).
+- **Hashtags (#)** and **mentions (@)** should only be added to the keywords list **if there are multiple related posts**.
+
+🔹 **Step 1: Process post text**
+- Remove **URLs** (e.g., "https://example.com").
+- Extract **hashtags (#hashtag)** and **mentions (@username)**.
+- Remove special characters **(except for @ and #)**.
+- Convert all text to **lowercase**.
+- **Skip posts** if they have fewer than 5 words.
+
+🔹 **Step 2: Extract keywords & hashtags**
+- **Only keep hashtags & mentions if they appear in 2 or more posts**.
+- Discard hashtags & mentions if they appear only once.
+- Retain **important keywords** such as **"blockchain", "zk-proof", "KYC", "DeFi", "wallet"**.
+
+🔹 **Step 3: Build the graph**
+- **Nodes:**
+  - Each post is a node:
+    \`{ "id": "Movement_1", "type": "post" }\`
+  - Each important keyword **(including popular hashtags/mentions)** is a node:
+    \`{ "id": "#defi", "type": "keyword" }\`
+    \`{ "id": "@elonmusk", "type": "keyword" }\`
+
+- **Edges:**
+  - Connect posts to keywords.
+  - Connect posts if they share a hashtag or mention that appears **in at least 2 posts**.
+  - Example:
+    \`{ "source": "Movement_1", "target": "#defi" }\`
+    \`{ "source": "Movement_1", "target": "rushi_2" }\` (if both share the same hashtag)
+
+🔹 **Input data (JSON)**
+Here is the list of posts:
+${JSON.stringify(formattedData, null, 2)}
+
+🔹 **Desired output data**
+- Return JSON with **nodes** and **edges** in the following format:
+\`\`\`json
+{
+   "nodes": [
+        { "id": "Movement_1", "type": "post" },
+        { "id": "#defi", "type": "keyword" },
+        { "id": "@elonmusk", "type": "keyword" }
+   ],
+   "edges": [
+        { "source": "Movement_1", "target": "#defi" },
+        { "source": "Movement_1", "target": "@elonmusk" },
+        { "source": "rushi_2", "target": "#defi" }
+   ]
+}
+\`\`\`
+- **Only return JSON**, no extra text.
+- Maintain standard JSON format for saving to a file and direct usage.
+`;
+
+        // Call the AI model with the constructed prompt
+        const aiResponse = await callGemini(aiPrompt);
+
+        if (typeof aiResponse === 'string') {
+            const graphData = JSON.parse(aiResponse);
+
+            // Map the content of posts into the graph data
+            const contentMap = formattedData.reduce((map, item) => {
+                map[item.id] = {
+                    text: item.text || "",
+                    url: item.url || ""
+                };
+                return map;
+            }, {});
+
+            // Add content and URLs to the nodes
+            graphData.nodes = graphData.nodes.map(node => ({
+                ...node,
+                content: node.type === "post" ? contentMap[node.id]?.text : undefined,
+                url: node.type === "post" ? contentMap[node.id]?.url : undefined
+            }));
+
+            // Return the graph data as a JSON response
+            res.json(graphData);
+        } else {
+            throw new Error(aiResponse.error);
+        }
+
+    } catch (error) {
+        res.status(500).json({
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+
+
+        router.get("/agents", (req, res) => {
+            const agentsList = Array.from(agents.values()).map((agent) => ({
+                id: agent.agentId,
+                name: agent.character.name,
+                clients: Object.keys(agent.clients),
+            }));
+            res.json({ agents: agentsList });
+        });
 
     router.get('/storage', async (req, res) => {
         try {
@@ -213,35 +484,35 @@ export function createApiRouter(
         });
     });
 
-    // router.get("/agents/:agentId/channels", async (req, res) => {
-    //     const { agentId } = validateUUIDParams(req.params, res) ?? {
-    //         agentId: null,
-    //     };
-    //     if (!agentId) return;
+    router.get("/agents/:agentId/channels", async (req, res) => {
+        const { agentId } = validateUUIDParams(req.params, res) ?? {
+            agentId: null,
+        };
+        if (!agentId) return;
 
-    //     const runtime = agents.get(agentId);
+        const runtime = agents.get(agentId);
 
-    //     if (!runtime) {
-    //         res.status(404).json({ error: "Runtime not found" });
-    //         return;
-    //     }
+        if (!runtime) {
+            res.status(404).json({ error: "Runtime not found" });
+            return;
+        }
 
-    //     const API_TOKEN = runtime.getSetting("DISCORD_API_TOKEN") as string;
-    //     const rest = new REST({ version: "10" }).setToken(API_TOKEN);
+        const API_TOKEN = runtime.getSetting("DISCORD_API_TOKEN") as string;
+        const rest = new REST({ version: "10" }).setToken(API_TOKEN);
 
-    //     try {
-    //         const guilds = (await rest.get(Routes.userGuilds())) as Array<any>;
+        try {
+            const guilds = (await rest.get(Routes.userGuilds())) as Array<any>;
 
-    //         res.json({
-    //             id: runtime.agentId,
-    //             guilds: guilds,
-    //             serverCount: guilds.length,
-    //         });
-    //     } catch (error) {
-    //         console.error("Error fetching guilds:", error);
-    //         res.status(500).json({ error: "Failed to fetch guilds" });
-    //     }
-    // });
+            res.json({
+                id: runtime.agentId,
+                guilds: guilds,
+                serverCount: guilds.length,
+            });
+        } catch (error) {
+            console.error("Error fetching guilds:", error);
+            res.status(500).json({ error: "Failed to fetch guilds" });
+        }
+    });
 
     router.get("/agents/:agentId/:roomId/memories", async (req, res) => {
         const { agentId, roomId } = validateUUIDParams(req.params, res) ?? {
@@ -307,103 +578,6 @@ export function createApiRouter(
             res.status(500).json({ error: "Failed to fetch memories" });
         }
     });
-
-    // router.get("/tee/agents", async (req, res) => {
-    //     try {
-    //         const allAgents = [];
-
-    //         for (const agentRuntime of agents.values()) {
-    //             const teeLogService = agentRuntime
-    //                 .getService<TeeLogService>(ServiceType.TEE_LOG)
-    //                 .getInstance();
-
-    //             const agents = await teeLogService.getAllAgents();
-    //             allAgents.push(...agents);
-    //         }
-
-    //         const runtime: AgentRuntime = agents.values().next().value;
-    //         const teeLogService = runtime
-    //             .getService<TeeLogService>(ServiceType.TEE_LOG)
-    //             .getInstance();
-    //         const attestation = await teeLogService.generateAttestation(
-    //             JSON.stringify(allAgents)
-    //         );
-    //         res.json({ agents: allAgents, attestation: attestation });
-    //     } catch (error) {
-    //         elizaLogger.error("Failed to get TEE agents:", error);
-    //         res.status(500).json({
-    //             error: "Failed to get TEE agents",
-    //         });
-    //     }
-    // });
-
-    // router.get("/tee/agents/:agentId", async (req, res) => {
-    //     try {
-    //         const agentId = req.params.agentId;
-    //         const agentRuntime = agents.get(agentId);
-    //         if (!agentRuntime) {
-    //             res.status(404).json({ error: "Agent not found" });
-    //             return;
-    //         }
-
-    //         const teeLogService = agentRuntime
-    //             .getService<TeeLogService>(ServiceType.TEE_LOG)
-    //             .getInstance();
-
-    //         const teeAgent = await teeLogService.getAgent(agentId);
-    //         const attestation = await teeLogService.generateAttestation(
-    //             JSON.stringify(teeAgent)
-    //         );
-    //         res.json({ agent: teeAgent, attestation: attestation });
-    //     } catch (error) {
-    //         elizaLogger.error("Failed to get TEE agent:", error);
-    //         res.status(500).json({
-    //             error: "Failed to get TEE agent",
-    //         });
-    //     }
-    // });
-
-    // router.post(
-    //     "/tee/logs",
-    //     async (req: express.Request, res: express.Response) => {
-    //         try {
-    //             const query = req.body.query || {};
-    //             const page = Number.parseInt(req.body.page) || 1;
-    //             const pageSize = Number.parseInt(req.body.pageSize) || 10;
-
-    //             const teeLogQuery: TeeLogQuery = {
-    //                 agentId: query.agentId || "",
-    //                 roomId: query.roomId || "",
-    //                 userId: query.userId || "",
-    //                 type: query.type || "",
-    //                 containsContent: query.containsContent || "",
-    //                 startTimestamp: query.startTimestamp || undefined,
-    //                 endTimestamp: query.endTimestamp || undefined,
-    //             };
-    //             const agentRuntime: AgentRuntime = agents.values().next().value;
-    //             const teeLogService = agentRuntime
-    //                 .getService<TeeLogService>(ServiceType.TEE_LOG)
-    //                 .getInstance();
-    //             const pageQuery = await teeLogService.getLogs(
-    //                 teeLogQuery,
-    //                 page,
-    //                 pageSize
-    //             );
-    //             const attestation = await teeLogService.generateAttestation(
-    //                 JSON.stringify(pageQuery)
-    //             );
-    //             res.json({
-    //                 logs: pageQuery,
-    //                 attestation: attestation,
-    //             });
-    //         } catch (error) {
-    //             elizaLogger.error("Failed to get TEE logs:", error);
-    //             res.status(500).json({
-    //                 error: "Failed to get TEE logs",
-    //             });
-    //         }
-    //     }
-    // );
 
     router.post("/agent/start", async (req, res) => {
         const { characterPath, characterJson } = req.body;

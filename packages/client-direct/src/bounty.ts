@@ -7,13 +7,17 @@ import {
   Network,
 } from "@aptos-labs/ts-sdk";
 
-const aptosConfig = new AptosConfig({ network: Network.TESTNET });
+// Configure Aptos client based on environment
+const network = process.env.APTOS_NETWORK === 'mainnet' ? Network.MAINNET : Network.TESTNET;
+const aptosConfig = new AptosConfig({ network });
 const aptos = new Aptos(aptosConfig);
 
+// Check for required environment variable
 if (!process.env.APTOS_PRIVATE_KEY) {
   throw new Error("APTOS_PRIVATE_KEY environment variable is not set");
 }
 
+// Initialize private key from environment variable
 const privateKey = new Ed25519PrivateKey(process.env.APTOS_PRIVATE_KEY);
 
 let account: Account;
@@ -98,46 +102,55 @@ export const participateInBounty = async (
 
 // Function to distribute rewards when the bounty deadline expires
 export const distributeRewards = async (bountyId: string): Promise<{ hash: string } | null> => {
-    try {
-        const FUNCTION_NAME = `${MODULE_ADDRESS}::bounty_pool_1_2::distribute_rewards`;
+  try {
+    const FUNCTION_NAME = `${MODULE_ADDRESS}::bounty_pool_1_2::distribute_rewards`;
 
-        const transaction = await aptos.transaction.build.simple({
-            sender: accountAddress,
-            data: {
-                function: FUNCTION_NAME,
-                functionArguments: [bountyId],
-            },
-        });
+    const transaction = await aptos.transaction.build.simple({
+      sender: accountAddress,
+      data: {
+        function: FUNCTION_NAME,
+        functionArguments: [bountyId],
+      },
+    });
 
-        const pendingTransaction = await aptos.signAndSubmitTransaction({
-            signer: account,
-            transaction,
-        });
+    const pendingTransaction = await aptos.signAndSubmitTransaction({
+      signer: account,
+      transaction,
+    });
 
-        const executedTransaction = await aptos.waitForTransaction({
-            transactionHash: pendingTransaction.hash,
-        });
+    const executedTransaction = await aptos.waitForTransaction({
+      transactionHash: pendingTransaction.hash,
+    });
 
-        console.log("Rewards Distributed Successfully:", executedTransaction);
-        return { hash: executedTransaction.hash }; // Return an object with hash
-    } catch (error) {
-        console.error("Error distributing rewards:", error);
-        return null; // Return null on error
-    }
+    console.log("Rewards Distributed Successfully:", executedTransaction);
+    return { hash: executedTransaction.hash }; // Return an object with hash
+  } catch (error) {
+    console.error("Error distributing rewards:", error);
+    return null; // Return null on error
+  }
 };
-export const get_all_bounties = async (): Promise<any[]> => {
+
+export interface BountyData {
+    bountyId: string;
+    expiredAt: string;
+    distributed: boolean;
+    // Add other fields as needed
+}
+
+export const get_all_bounties = async (): Promise<BountyData[]> => {
     const payload: InputViewFunctionData = {
         function: `${MODULE_ADDRESS}::bounty_pool_1_2::get_all_bounties`,
     };
     try {
         const data = await aptos.view({ payload });
         console.log(data);
-        return data; // Return the data retrieved
+        return data as BountyData[]; // Return the data retrieved
     } catch (error) {
         console.log(error);
         return []; // Return an empty array on error
     }
-}
+};
+
 export const get_bounties_by_creator= async()=>{
   const address = accountAddress
 

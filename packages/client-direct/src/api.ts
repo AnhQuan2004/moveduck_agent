@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Router } from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import path from "path";
@@ -14,12 +14,11 @@ import {
     ServiceType,
     type Character,
 } from "@elizaos/core";
-
+import { get_all_bounties, distributeRewards } from "./bounty";
 import { REST, Routes } from "discord.js";
 import type { DirectClient } from ".";
 import { validateUuid } from "@elizaos/core";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import type { Router } from 'express';
 
 interface UUIDParams {
     agentId: UUID;
@@ -101,157 +100,155 @@ export function createApiRouter(
         res.json({ message: "Hello World!" });
     });
 
-//     router.get("/data", async (req, res) => {
-//         res.header("Access-Control-Allow-Origin", "*");
-//         res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-//         res.header("Access-Control-Allow-Headers", "Content-Type");
-    
-//         try {
-//             let rawData = await getAllData();
-    
-//             if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
-//                 throw new Error('No valid data found from Pinata');
-//             }
-    
-//             const authorCounts = {};
-//             const formattedData = rawData.map(tweet => {
-//                 const author = tweet.authorFullname || "anonymous";
-//                 authorCounts[author] = (authorCounts[author] || 0) + 1;
-    
-//                 return {
-//                     id: `${author}_${authorCounts[author]}`,
-//                     authorFullname: author,
-//                     text: tweet.text,
-//                     url: tweet.url
-//                 };
-//             });
-    
-//             const aiPrompt = `
-// 🔹 🔹 **Objective**
-// - Convert the list of posts into a network consisting of **nodes** (posts, important keywords) and **edges** (relationships between them).
-// - **Hashtags (#)** and **mentions (@)** should only be added to the keywords list **if there are multiple related posts**.
+    // Route to process and distribute rewards for expired bounties
+    router.get("/reward", async (req, res) => {
+        try {
+            // Step 1: Get all bounties
+            const rawBounties = await get_all_bounties();
+            console.log("Raw bounties response:", JSON.stringify(rawBounties, null, 2));
 
-// 🔹 **Step 1: Process post text**
-// - Remove **URLs** (e.g., "https://example.com").
-// - Extract **hashtags (#hashtag)** and **mentions (@username)**.
-// - Remove special characters **(except for @ and #)**.
-// - Convert all text to **lowercase**.
-// - **Skip posts** if they have fewer than 5 words.
+            // The response is nested in an array of arrays, so we need to get the first element
+            const bounties = Array.isArray(rawBounties) && rawBounties.length > 0 ? 
+                (Array.isArray(rawBounties[0]) ? rawBounties[0] : []) : [];
 
-// 🔹 **Step 2: Extract keywords & hashtags**
-// - **Only keep hashtags & mentions if they appear in 2 or more posts**.
-// - Discard hashtags & mentions if they appear only once.
-// - Retain **important keywords** such as **"blockchain", "zk-proof", "KYC", "DeFi", "wallet"**.
+            console.log("Processed bounties array:", JSON.stringify(bounties, null, 2));
 
-// 🔹 **Step 3: Build the graph**
-// - **Nodes:**
-//   - Each post is a node:
-//     \`{ "id": "Movement_1", "type": "post" }\`
-//   - Each important keyword **(including popular hashtags/mentions)** is a node:
-//     \`{ "id": "#defi", "type": "keyword" }\`
-//     \`{ "id": "@elonmusk", "type": "keyword" }\`
-
-// - **Edges:**
-//   - Connect posts to keywords.
-//   - Connect posts if they share a hashtag or mention that appears **in at least 2 posts**.
-//   - Example:
-//     \`{ "source": "Movement_1", "target": "#defi" }\`
-//     \`{ "source": "Movement_1", "target": "rushi_2" }\` (if both share the same hashtag)
-
-// 🔹 **Input data (JSON)**
-// Here is the list of posts:
-// ${JSON.stringify(formattedData, null, 2)}
-
-// 🔹 **Desired output data**
-// - Return JSON with **nodes** and **edges** in the following format:
-// \`\`\`json
-// {
-//    "nodes": [
-//         { "id": "Movement_1", "type": "post" },
-//         { "id": "#defi", "type": "keyword" },
-//         { "id": "@elonmusk", "type": "keyword" }
-//    ],
-//    "edges": [
-//         { "source": "Movement_1", "target": "#defi" },
-//         { "source": "Movement_1", "target": "@elonmusk" },
-//         { "source": "rushi_2", "target": "#defi" }
-//    ]
-// }
-// \`\`\`
-// - **Only return JSON**, no extra text.
-// - Maintain standard JSON format for saving to a file and direct usage.
-// `;
-    
-//             const aiResponse = await callGemini(aiPrompt);
-    
-//             if (typeof aiResponse === 'string') {
-//                 const graphData = JSON.parse(aiResponse);
-                
-//                 const contentMap = formattedData.reduce((map, item) => {
-//                     map[item.id] = {
-//                         text: item.text || "",
-//                         url: item.url || ""
-//                     };
-//                     return map;
-//                 }, {});
-
-//                 graphData.nodes = graphData.nodes.map(node => ({
-//                     ...node,
-//                     content: node.type === "post" ? contentMap[node.id]?.text : undefined,
-//                     url: node.type === "post" ? contentMap[node.id]?.url : undefined
-//                 }));
-
-//                 res.json(graphData);
-//             } else {
-//                 throw new Error(aiResponse.error);
-//             }
-    
-//         } catch (error) {
-//             res.status(500).json({
-//                 error: error.message,
-//                 timestamp: new Date().toISOString()
-//             });
-//         }
-//     });
-router.get("/data", async (req, res) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type");
-
-    try {
-        let rawData = await getAllData();
-
-        if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
-            throw new Error('No valid data found from Pinata');
-        }
-
-        const authorCounts = {};
-        const formattedData = rawData.map(tweet => {
-            // Add checks to ensure tweet and its properties are defined
-            if (!tweet || !tweet.text) {
-                console.log("Skipping invalid tweet:", tweet);
-                return null; // Skip invalid or incomplete tweets
+            // Check if bounties are valid
+            if (!Array.isArray(bounties) || bounties.length === 0) {
+                throw new Error("No bounties found or invalid data format");
             }
 
-            const author = tweet.authorFullname || "anonymous"; // fallback to 'anonymous'
-            const text = tweet.text || ""; // empty string if missing
-            const url = tweet.url || ""; // empty string if missing
+            // Step 2: Determine current time
+            const currentTime = Math.floor(Date.now() / 1000);
+            console.log("Current Time:", currentTime);
 
-            authorCounts[author] = (authorCounts[author] || 0) + 1;
+            const results = [];
 
-            return {
-                id: `${author}_${authorCounts[author]}`,
-                authorFullname: author,
-                text: text,
-                url: url
-            };
-        }).filter(tweet => tweet !== null); // Remove any invalid tweets from the list
+            // Step 3: Process each bounty
+            for (const bounty of bounties) {
+                // Convert snake_case to camelCase and parse values
+                const expiredAt = parseInt(bounty.expired_at, 10);
+                const shouldProcess = expiredAt <= currentTime && !bounty.distributed;
 
-        if (formattedData.length === 0) {
-            throw new Error("No valid tweets to process.");
+                console.log(`Processing bounty:
+                    ID: ${bounty.bounty_id}
+                    Expired At: ${expiredAt} (${new Date(expiredAt * 1000).toISOString()})
+                    Current Time: ${currentTime} (${new Date(currentTime * 1000).toISOString()})
+                    Distributed: ${bounty.distributed}
+                    Should Process: ${shouldProcess}
+                    Raw Bounty Data: ${JSON.stringify(bounty, null, 2)}
+                `);
+
+                if (shouldProcess) {
+                    try {
+                        console.log(`Processing distribution for bounty ID: ${bounty.bounty_id}`);
+                        const result = await distributeRewards(bounty.bounty_id);
+
+                        if (result !== null && result.hash) {
+                            results.push({
+                                bountyId: bounty.bounty_id,
+                                status: "success",
+                                transactionHash: result.hash,
+                                expiredAt: new Date(expiredAt * 1000).toISOString(),
+                                rewardAmount: bounty.reward_amount,
+                                participants: bounty.participants?.length || 0,
+                                minParticipants: bounty.min_of_participants
+                            });
+                        } else {
+                            console.log(`Distribution failed for bounty ID: ${bounty.bounty_id}`);
+                            results.push({
+                                bountyId: bounty.bounty_id,
+                                status: "skipped",
+                                reason: "Distribution failed or already processed",
+                                expiredAt: new Date(expiredAt * 1000).toISOString(),
+                                rewardAmount: bounty.reward_amount,
+                                participants: bounty.participants?.length || 0,
+                                minParticipants: bounty.min_of_participants
+                            });
+                        }
+                    } catch (error) {
+                        console.error(`Error processing bounty ID: ${bounty.bounty_id}`, error);
+                        results.push({
+                            bountyId: bounty.bounty_id,
+                            status: "failed",
+                            error: error.message,
+                            expiredAt: new Date(expiredAt * 1000).toISOString(),
+                            rewardAmount: bounty.reward_amount,
+                            participants: bounty.participants?.length || 0,
+                            minParticipants: bounty.min_of_participants
+                        });
+                    }
+                } else {
+                    console.log(`Skipped bounty ID: ${bounty.bounty_id} - not expired or already distributed`);
+                    results.push({
+                        bountyId: bounty.bounty_id,
+                        status: "pending",
+                        reason: !bounty.distributed ? "Not expired yet" : "Already distributed",
+                        expiredAt: new Date(expiredAt * 1000).toISOString(),
+                        rewardAmount: bounty.reward_amount,
+                        participants: bounty.participants?.length || 0,
+                        minParticipants: bounty.min_of_participants,
+                        currentTime: new Date(currentTime * 1000).toISOString()
+                    });
+                }
+            }
+
+            // Step 4: Return results
+            res.json({
+                timestamp: new Date().toISOString(),
+                currentTimestamp: currentTime,
+                processedBounties: results,
+                totalBounties: bounties.length,
+                rawBountyData: bounties // Include raw data for debugging
+            });
+        } catch (error) {
+            console.error("Error in /reward route:", error);
+            res.status(500).json({
+                error: error.message,
+                timestamp: new Date().toISOString()
+            });
         }
+    });
 
-        const aiPrompt = `
+    router.get("/data", async (req, res) => {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        res.header("Access-Control-Allow-Headers", "Content-Type");
+
+        try {
+            let rawData = await getAllData();
+
+            if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
+                throw new Error('No valid data found from Pinata');
+            }
+
+            const authorCounts = {};
+            const formattedData = rawData.map(tweet => {
+                // Add checks to ensure tweet and its properties are defined
+                if (!tweet || !tweet.text) {
+                    console.log("Skipping invalid tweet:", tweet);
+                    return null; // Skip invalid or incomplete tweets
+                }
+
+                const author = tweet.authorFullname || "anonymous"; // fallback to 'anonymous'
+                const text = tweet.text || ""; // empty string if missing
+                const url = tweet.url || ""; // empty string if missing
+
+                authorCounts[author] = (authorCounts[author] || 0) + 1;
+
+                return {
+                    id: `${author}_${authorCounts[author]}`,
+                    authorFullname: author,
+                    text: text,
+                    url: url
+                };
+            }).filter(tweet => tweet !== null); // Remove any invalid tweets from the list
+
+            if (formattedData.length === 0) {
+                throw new Error("No valid tweets to process.");
+            }
+
+            const aiPrompt = `
 🔹 🔹 **Objective**
 - Convert the list of posts into a network consisting of **nodes** (posts, important keywords) and **edges** (relationships between them).
 - **Hashtags (#)** and **mentions (@)** should only be added to the keywords list **if there are multiple related posts**.
@@ -307,52 +304,50 @@ ${JSON.stringify(formattedData, null, 2)}
 - Maintain standard JSON format for saving to a file and direct usage.
 `;
 
-        // Call the AI model with the constructed prompt
-        const aiResponse = await callGemini(aiPrompt);
+            // Call the AI model with the constructed prompt
+            const aiResponse = await callGemini(aiPrompt);
 
-        if (typeof aiResponse === 'string') {
-            const graphData = JSON.parse(aiResponse);
+            if (typeof aiResponse === 'string') {
+                const graphData = JSON.parse(aiResponse);
 
-            // Map the content of posts into the graph data
-            const contentMap = formattedData.reduce((map, item) => {
-                map[item.id] = {
-                    text: item.text || "",
-                    url: item.url || ""
-                };
-                return map;
-            }, {});
+                // Map the content of posts into the graph data
+                const contentMap = formattedData.reduce((map, item) => {
+                    map[item.id] = {
+                        text: item.text || "",
+                        url: item.url || ""
+                    };
+                    return map;
+                }, {});
 
-            // Add content and URLs to the nodes
-            graphData.nodes = graphData.nodes.map(node => ({
-                ...node,
-                content: node.type === "post" ? contentMap[node.id]?.text : undefined,
-                url: node.type === "post" ? contentMap[node.id]?.url : undefined
-            }));
+                // Add content and URLs to the nodes
+                graphData.nodes = graphData.nodes.map(node => ({
+                    ...node,
+                    content: node.type === "post" ? contentMap[node.id]?.text : undefined,
+                    url: node.type === "post" ? contentMap[node.id]?.url : undefined
+                }));
 
-            // Return the graph data as a JSON response
-            res.json(graphData);
-        } else {
-            throw new Error(aiResponse.error);
+                // Return the graph data as a JSON response
+                res.json(graphData);
+            } else {
+                throw new Error(aiResponse.error);
+            }
+
+        } catch (error) {
+            res.status(500).json({
+                error: error.message,
+                timestamp: new Date().toISOString()
+            });
         }
+    });
 
-    } catch (error) {
-        res.status(500).json({
-            error: error.message,
-            timestamp: new Date().toISOString()
-        });
-    }
-});
-
-
-
-        router.get("/agents", (req, res) => {
-            const agentsList = Array.from(agents.values()).map((agent) => ({
-                id: agent.agentId,
-                name: agent.character.name,
-                clients: Object.keys(agent.clients),
-            }));
-            res.json({ agents: agentsList });
-        });
+    router.get("/agents", (req, res) => {
+        const agentsList = Array.from(agents.values()).map((agent) => ({
+            id: agent.agentId,
+            name: agent.character.name,
+            clients: Object.keys(agent.clients),
+        }));
+        res.json({ agents: agentsList });
+    });
 
     router.get('/storage', async (req, res) => {
         try {

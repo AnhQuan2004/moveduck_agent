@@ -1,5 +1,5 @@
 import { Action, ActionExample, Memory, IAgentRuntime, State, HandlerCallback, generateText, ModelClass } from "@elizaos/core";
-import { sonicServices } from '../services/sonic';
+import { get_all_bounties, participateInBounty } from '../services/bounty';
 import { evaluateSubmissionPrompt } from './prompts';
 import * as fs from 'fs/promises';
 import { ethers } from 'ethers';
@@ -9,10 +9,15 @@ async function writeToLog(message: string) {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] ${message}\n`;
     try {
-        await fs.appendFile('verify_log.txt', logMessage);
+        await fs.appendFile('pinata_bounty.txt', logMessage);
     } catch (error) {
         console.error('Error writing to log file:', error);
     }
+}
+
+// Log the return values of functions
+async function logFunctionReturn(functionName: string, returnValue: any) {
+    await writeToLog(`Function ${functionName} returned: ${JSON.stringify(returnValue)}`);
 }
 
 // Function to fetch data from IPFS
@@ -68,7 +73,7 @@ export default {
                 await writeToLog("Starting submission evaluation process");
                 
                 // Parse user input
-                const matches = message.content.text.match(/data submit:\s*(.+?)\s*wallet address:\s*(.+?)\s*bountyId:\s*(.+?)(?:\s|$)/s);
+                const matches = message.content.text.match(/data submit:\s*([\s\S]+?)\s*wallet address:\s*([\s\S]+?)\s*bountyId:\s*([\s\S]+?)(?:\s|$)/);
                 
                 if (!matches) {
                     throw new Error("Invalid input format. Please provide data submit, wallet address, and bountyId.");
@@ -78,14 +83,19 @@ export default {
 
                 // Get all bounties from blockchain
                 console.log("\n=== FETCHING BOUNTY DATA ===");
-                const bounties = await sonicServices.findAll();
+                const bounties = await get_all_bounties();
+                await logFunctionReturn('get_all_bounties', bounties);
 
-                if (!bounties || bounties instanceof Error) {
+                if (!bounties || (Array.isArray(bounties) && bounties.length === 0)) {
                     throw new Error("Failed to fetch bounties");
                 }
 
+                // The response is nested in an array of arrays, so we need to get the first element
+                const bountyList = Array.isArray(bounties[0]) ? bounties[0] : bounties;
+                console.log("Processed bounty list:", JSON.stringify(bountyList, null, 2));
+
                 // Find the specific bounty
-                const bounty = bounties.find(b => b.bountyId === bountyId);
+                const bounty = bountyList.find((b: any) => b.bounty_id === bountyId);
                 if (!bounty) {
                     callback?.({
                         text: `Bounty not available. The bounty ID ${bountyId} could not be found.`,
@@ -101,7 +111,8 @@ export default {
 
                 // Fetch IPFS data for the bounty
                 console.log(`\n=== FETCHING IPFS DATA FOR BOUNTY ${bountyId} ===`);
-                const ipfsData = await getPinataData(bountyId);
+                const ipfsData = await getPinataData(bounty.data_ref || bountyId);
+                await logFunctionReturn('getPinataData', ipfsData);
                 if (!ipfsData) {
                     throw new Error("Failed to fetch bounty IPFS data");
                 }
@@ -117,6 +128,7 @@ export default {
                     context: evaluateSubmissionPrompt(allPostsContent, submitData, requirements),
                     modelClass: ModelClass.SMALL,
                 });
+                await logFunctionReturn('generateText', evaluationResult);
 
                 let evaluation;
                 try {
@@ -143,11 +155,12 @@ export default {
                     console.log("\n=== SUBMITTING TO BLOCKCHAIN ===");
                     try {
                         const point = Math.floor(evaluation.overallScore * 10); // Convert score to points (0-100)
-                        const result = await sonicServices.participateInBounty(
+                        const result = await participateInBounty(
                             walletAddress,
                             point,
                             bountyId
                         );
+                        await logFunctionReturn('participateInBounty', result);
                         console.log("Blockchain submission result:", result);
                     } catch (error) {
                         console.error("Failed to submit to blockchain:", error);
@@ -166,8 +179,8 @@ export default {
                         evaluation,
                         bountyDetails: {
                             ...bounty,
-                            rewardAmount: ethers.formatEther(bounty.rewardAmount),
-                            expiredAt: new Date(Number(bounty.expiredAt) * 1000).toISOString(),
+                            rewardAmount: bounty.reward_amount ? (parseInt(bounty.reward_amount) / 100000000).toString() : "0", // Convert from Octas to APT
+                            expiredAt: new Date(Number(bounty.expired_at) * 1000).toISOString(),
                             requirements: ipfsData.requirements,
                             allPostData: ipfsData.allPostData
                         }
@@ -179,28 +192,31 @@ export default {
                 await writeToLog("Starting bounty verification process");
 
                 console.log("\n=== FETCHING ALL BOUNTIES FROM BLOCKCHAIN ===");
-                const bounties = await sonicServices.findAll();
+                const bounties = await get_all_bounties();
+                await logFunctionReturn('get_all_bounties', bounties);
 
                 if (!bounties || bounties instanceof Error) {
                     throw new Error("Failed to fetch bounties");
                 }
 
-                console.log(`Found ${bounties.length} bounties. Fetching IPFS data...`);
+                // The response is nested in an array of arrays, so we need to get the first element
+                const bountyList = Array.isArray(bounties[0]) ? bounties[0] : bounties;
+                console.log("Processing bounty list:", JSON.stringify(bountyList, null, 2));
 
-                const formattedBounties = await Promise.all(bounties.map(async bounty => {
-                    const ipfsData = await getPinataData(bounty.bountyId);
+                const formattedBounties = await Promise.all(bountyList.map(async bounty => {
+                    const ipfsData = await getPinataData(bounty.data_ref || bounty.bounty_id);
                     
                     // Only include bounties with valid IPFS data
                     if (ipfsData) {
-                        console.log(`Successfully processed bounty ID: ${bounty.bountyId}`);
+                        console.log(`Successfully processed bounty ID: ${bounty.bounty_id}`);
                         return {
-                            bountyId: bounty.bountyId,
+                            bountyId: bounty.bounty_id,
                             creator: bounty.creator,
-                            rewardAmount: ethers.formatEther(bounty.rewardAmount),
-                            minOfParticipants: bounty.minOfParticipants,
-                            expiredAt: new Date(Number(bounty.expiredAt) * 1000).toISOString(),
+                            rewardAmount: bounty.reward_amount ? (parseInt(bounty.reward_amount) / 100000000).toString() : "0", // Convert from Octas to APT
+                            minOfParticipants: bounty.min_of_participants,
+                            expiredAt: new Date(Number(bounty.expired_at) * 1000).toISOString(),
                             distributed: bounty.distributed,
-                            participantCount: bounty.participantCount,
+                            participantCount: (bounty.participants || []).length,
                             allPostData: ipfsData.allPostData || {},
                             title: ipfsData.title || '',
                             description: ipfsData.description || '',

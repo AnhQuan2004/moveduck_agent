@@ -247,20 +247,23 @@ Aptos Smart Contract Development Project
 export const getAllPostsPrompt = (textContent: string, datapost: string) => {
     return `
         Based on the request: "${textContent}"
-        Format these posts into a clear table structure: "${datapost}"
+        Format these posts into a GFM markdown table: "${datapost}"
 
-        Create a well-organized table with the following format:
+        # Posts Overview
 
-        ### Posts Overview Table
+        | No. | Author | Post Content |
+        |-----|:------:|--------------|
+        ${datapost}
 
-        | No. | Author | Post Content 
-        |-----|---------|-------------|
-        [Insert rows here with post data]
-
-        Formatting Rules:
+        Please follow these formatting rules:
         1. Number each post sequentially
         2. Truncate long post content to first 100 characters and add "..." if needed
         3. Maximum 20 posts per page
+        4. Use proper column alignment syntax:
+           - Left-align the "No." column
+           - Center-align the "Author" column (using :---:)
+           - Left-align the "Post Content" column
+        5. Ensure all table cells follow GFM markdown table syntax
+        6. Do not include explain, just the table
     `;
 }
-

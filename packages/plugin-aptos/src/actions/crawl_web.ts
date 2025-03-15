@@ -7,22 +7,22 @@ export async function getPageContent(targetUrl: string): Promise<string> {
 
   await page.goto(targetUrl, { waitUntil: "networkidle2" });
 
-  // Lấy domain từ URL để xác định hành vi crawl
+  // Get domain from URL to determine crawl behavior
   const domain = new URL(targetUrl).hostname;
 
-  // Kiểm tra domain
+  // Check domain
   let content;
   if (
     domain.includes("aptos.dev") ||
     domain.includes("move-developers-dao.gitbook.io")
   ) {
-    // Lấy nội dung chỉ trong <main>
+    // Get content only from <main> element
     content = await page.evaluate(() => {
       const mainElement = document.querySelector("main");
       return mainElement ? mainElement.innerText : "";
     });
   } else {
-    // Mặc định lấy toàn bộ nội dung từ <body>
+    // Default to getting all content from <body>
     content = await page.evaluate(() => document.body.innerText);
   }
 
@@ -33,4 +33,3 @@ export async function getPageContent(targetUrl: string): Promise<string> {
   
   return content;
 }
-

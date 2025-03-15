@@ -1,76 +1,76 @@
 import dotenv from "dotenv";
 import { Scraper } from "agent-twitter-client";
 
-// Load biến môi trường từ file .env
+// Load environment variables from .env file
 dotenv.config();
 
-// Khởi tạo Scraper
+// Initialize Scraper
 const scraper = new Scraper();
 
 let accountLoggedIn = false;
 
-// Hàm đăng nhập Twitter
+// Twitter login function
 const login = async () => {
-  console.log("🟠 Đang đăng nhập bằng tài khoản...");
+  console.log("🟠 Logging in with account...");
   await scraper.login(
     process.env.TWITTER_USERNAME || "",
     process.env.TWITTER_PASSWORD || ""
   );
-  console.log("🟢 Đã đăng nhập thành công!");
+  console.log("🟢 Login successful!");
   accountLoggedIn = true;
 };
 
-// Hàm lấy tweet theo ID
+// Get tweet by ID function
 export const getTweetById = async (tweetId: string) => {
   if (!accountLoggedIn) await login();
 
   try {
     const tweet = await scraper.getTweet(tweetId);
-    console.log("🔹 Tweet lấy được:", tweet);
+    console.log("🔹 Retrieved tweet:", tweet);
     return tweet;
   } catch (error) {
-    console.error("❌ Lỗi khi lấy tweet:", error);
+    console.error("❌ Error getting tweet:", error);
     throw error;
   }
 };
 
-// Hàm lấy tất cả tweet của một user
+// Get all tweets from a user
 export const getTweetsByUser = async (username: string, count: number = 5) => {
   if (!accountLoggedIn) await login();
 
   try {
     const tweets = await scraper.getTweets(username, count);
-    console.log(`🔹 ${count} tweet gần đây của ${username}:`, tweets);
+    console.log(`🔹 ${count} recent tweets from ${username}:`, tweets);
     return tweets;
   } catch (error) {
-    console.error("❌ Lỗi khi lấy tweet:", error);
+    console.error("❌ Error getting tweets:", error);
     throw error;
   }
 };
 
-// Hàm đăng một tweet mới
+// Post a new tweet function
 export const postTweet = async (content: string) => {
   if (!accountLoggedIn) await login();
 
   try {
     await scraper.sendTweet(content);
-    console.log("✅ Đã đăng tweet:", content);
+    console.log("✅ Tweet posted:", content);
   } catch (error) {
-    console.error("❌ Lỗi khi đăng tweet:", error);
+    console.error("❌ Error posting tweet:", error);
     throw error;
   }
 };
 
-// Hàm lấy tweet mới nhất của một tài khoản
+// Get latest tweet from an account
 export const getLatestTweet = async (username: string) => {
   if (!accountLoggedIn) await login();
 
   try {
     const latestTweet = await scraper.getLatestTweet(username);
-    console.log("🔹 Tweet mới nhất:", latestTweet);
+    console.log("🔹 Latest tweet:", latestTweet);
     return latestTweet;
   } catch (error) {
-    console.error("❌ Lỗi khi lấy tweet mới nhất:", error);
+    console.error("❌ Error getting latest tweet:", error);
     throw error;
   }
 };

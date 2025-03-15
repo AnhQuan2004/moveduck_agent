@@ -153,6 +153,8 @@ export const quizGenPrompt = (textContent: string) => {
         - Answers must be extremely short - single words or brief phrases only.
         - Only one answer should be correct.
         - If a concept can't be expressed in 18 chars, simplify it or break it down.
+        - For longer content (like web pages), focus on the most important concepts and key takeaways.
+        - For technical content, prioritize questions about core concepts, features, and benefits.
 
         Format the output as follows:
         Example Output:

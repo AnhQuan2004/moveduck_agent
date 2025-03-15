@@ -3,6 +3,8 @@ import { quizGenPrompt } from "./prompts";
 import { QuizGenAction } from "./enum";
 import axios from 'axios';
 import { getTweetById } from "./twitterClient";
+import { getPageContent } from "./crawl_web";
+import { URL } from "url";
 
 interface QuizQuestion {
     question: string;
@@ -24,6 +26,38 @@ function extractTweetId(text: string): string | null {
     }
     
     return null;
+}
+
+// Function to extract URLs from text
+function extractUrl(text: string): string | null {
+    // Check for URLs with @ prefix (e.g., "gen quiz @https://example.com")
+    const atPrefixRegex = /@(https?:\/\/[^\s]+)/i;
+    const atMatch = text.match(atPrefixRegex);
+    
+    if (atMatch && atMatch[1]) {
+        return atMatch[1];
+    }
+    
+    // Regular URL matching as fallback
+    const urlRegex = /(https?:\/\/[^\s]+)/i;
+    const match = text.match(urlRegex);
+    
+    if (match && match[1]) {
+        return match[1];
+    }
+    
+    return null;
+}
+
+// Function to check if URL is from allowed domains
+function isAllowedDomain(url: string): boolean {
+    try {
+        const domain = new URL(url).hostname;
+        return domain.includes("aptos.dev") || domain.includes("move-developers-dao.gitbook.io");
+    } catch (error) {
+        elizaLogger.error(`Error parsing URL: ${error}`);
+        return false;
+    }
 }
 
 interface QuizData {
@@ -65,7 +99,7 @@ async function storeQuizToBackend(quizData: QuizData): Promise<boolean> {
 export default {
     name: "QUIZ_GEN",
     similes: [
-        "quiz gen", "quiz", "I need to quiz gen", "help me quiz gen", "what quiz gen", "help me generate a quiz", "generate a quiz", "quiz generation", "quiz generation help", "quiz generation help me", "quiz generation what", "quiz generation generate"
+        "quiz gen", "quiz", "I need to quiz gen", "help me quiz gen", "what quiz gen", "help me generate a quiz", "generate a quiz", "quiz generation", "quiz generation help", "quiz generation help me", "quiz generation what", "quiz generation generate", "gen quiz"
     ],
     description: "Quiz gen of text content",
 
@@ -106,6 +140,33 @@ export default {
                 } catch (error) {
                     elizaLogger.error(`Error fetching tweet: ${error}`);
                     // Continue with original text if tweet fetch fails
+                }
+            } else {
+                // Check for URLs from allowed domains
+                const url = extractUrl(contentText);
+                if (url && isAllowedDomain(url)) {
+                    try {
+                        elizaLogger.info(`Found URL from allowed domain: ${url}. Crawling content...`);
+                        const webContent = await getPageContent(url);
+                        
+                        if (webContent && webContent.length > 0) {
+                            elizaLogger.info(`Successfully crawled content from: ${url}`);
+                            // Use the crawled content for quiz generation
+                            contentText = webContent;
+                            
+                            // Store source information
+                            sourceInfo = {
+                                type: 'web',
+                                url: url,
+                                document: webContent // Add the original web content
+                            };
+                        } else {
+                            elizaLogger.warn(`Could not crawl content from URL: ${url}`);
+                        }
+                    } catch (error) {
+                        elizaLogger.error(`Error crawling web content: ${error}`);
+                        // Continue with original text if web crawl fails
+                    }
                 }
             }
             
@@ -222,6 +283,14 @@ export default {
                 user: "{{user4}}",
                 content: {
                     text: "The latest update is frustrating and confusing."
+                }
+            }
+        ],
+        [
+            {
+                user: "{{user5}}",
+                content: {
+                    text: "gen quiz @https://move-developers-dao.gitbook.io/aptos-move-by-example/why-is-move-secure"
                 }
             }
         ]

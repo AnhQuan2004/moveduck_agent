@@ -8,6 +8,7 @@
   "dependencies": {
     "@aptos-labs/ts-sdk": "^1.26.0",
     "@elizaos/core": "workspace:^",
+    "agent-twitter-client": "^0.0.18",
     "bignumber.js": "9.1.2",
     "node-cache": "5.1.2",
     "tsup": "8.3.5",

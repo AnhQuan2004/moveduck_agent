@@ -99,9 +99,9 @@ async function storeQuizToBackend(quizData: QuizData): Promise<boolean> {
 export default {
     name: "QUIZ_GEN",
     similes: [
-        "quiz gen", "quiz", "I need to quiz gen", "help me quiz gen", "what quiz gen", "help me generate a quiz", "generate a quiz", "quiz generation", "quiz generation help", "quiz generation help me", "quiz generation what", "quiz generation generate", "gen quiz"
+        "quiz gen", "quiz", "I need to quiz gen", "help me quiz gen", "what quiz gen", "help me generate a quiz", "generate a quiz", "quiz generation", "quiz generation help", "quiz generation help me", "quiz generation what", "quiz generation generate", "gen quiz", "create question", "generate question", "help me create question", "help me generate question"
     ],
-    description: "Quiz gen of text content",
+    description: "Quiz gen and create question from tweet, url and document",
 
     validate: async (runtime: IAgentRuntime, message: Memory) => {
         return message.content?.text?.length > 0;
